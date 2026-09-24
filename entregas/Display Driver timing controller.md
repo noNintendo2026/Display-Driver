@@ -16,7 +16,7 @@ El procesador principal actúa como dispositivo Maestro (Controller) y la FPGA c
 * La línea `MISO` (`CIPO`) se mantiene inactiva (o en un estado constante) ya que nuestro driver de pantalla solo recibe datos y no necesita responder al controlador.
 * Una vez finalizada la transmisión del paquete de datos, la señal `CS` (o `NSS`) vuelve a su estado inactivo en alto.
 
-![Diagrama de tiempos SPI](./02_spi_timing.png)
+![Diagrama de tiempos SPI](imgs/spi_timing.png)
 
 ### 1.2. Protocolo de Actualización de Sprites
 El desplazamiento de objetos gráficos en pantalla (sprites) requiere la sobrescritura de los datos previos en memoria. El flujo de actualización ejecutado por la lógica del sistema consta de los siguientes pasos secuenciales:
@@ -34,7 +34,7 @@ Este protocolo exige una sincronización rigurosa generada desde el hardware de 
 * **Output Enable (`OE`):** Señal activa en bajo. Debe ponerse en ALTO (apagar LEDs) mientras se cambia de fila para evitar un efecto de "fantasmeo" (ghosting) o parpadeo. También se modula por ancho de pulso (PWM) para controlar el brillo general o la profundidad de color.
 * **Latch / Strobe (`LAT`):** Un pulso rápido en alto al final de los 64 ciclos de reloj para aplicar los datos guardados en los registros a los LEDs visibles.
 * **Direccionamiento de Fila (`A, B, C, D, E`):** Pines binarios que seleccionan cuál de las 32 filas físicas de la matriz se va a encender en ese instante.
-![Puerto HUB75](./02_d1.svg)
+![Puerto HUB75](imgs/d1.svg)
 
 ### Máquina de Estados del Ciclo de Barrido
 1. `OE` = 1 (Pantalla apagada).
@@ -52,14 +52,14 @@ Para garantizar una correcta visualización y evitar artefactos gráficos, el co
 * **Compatibilidad de Hardware:** Algunos paneles específicos exigen por diseño que la señal `oe` se encuentre en estado alto mientras la señal `latch` esté en estado alto.
 * **Control de Brillo:** El nivel de brillo de los LEDs depende directamente de la cantidad de tiempo que `oe` permanece en estado bajo. Para evitar variaciones de luminosidad entre distintas filas, el tiempo de activación de `oe` debe ser estrictamente igual para cada una de ellas.
 * **Precisión del Reloj:** Se debe generar exactamente la misma cantidad de ciclos de reloj como píxeles tenga el ancho de la pantalla antes de activar el `latch` (por ejemplo, 64 ciclos)[cite: 10]. Un número menor desplazará la imagen; los ciclos adicionales emitidos después del pulso de `latch` serán ignorados por el hardware del panel.
-* ![HUB75 timing](./02_wd1.png)
+* ![HUB75 timing](imgs/wd1.png)
 
 ## 3. Implementación Síncrona Sugerida
 El segundo diagrama propone una alternativa de diseño donde las señales de control (`oe`, `latch` y `addr`) se tratan de manera síncrona con el reloj. 
 
 La principal ventaja de este enfoque es que elimina la necesidad de implementar un reloj condicionado (gated clock) en el hardware. Bajo este esquema, la señal `oe` mantiene una longitud constante (calculada como el ancho del panel menos 3 ciclos de reloj), simplificando el diseño de la máquina de estados en el código HDL.
 
-![HUB75 timing suggestion](./02_wd2.png)
+![HUB75 timing suggestion](imgs/wd2.png)
 
 Informacion tomada de [Moonbaseotago](http://www.moonbaseotago.com/hub75/) y [vanhunteradams](https://vanhunteradams.com/Protocols/SPI/SPI.html)
 
